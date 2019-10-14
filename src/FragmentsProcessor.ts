@@ -290,7 +290,7 @@ export const load = function (filePath: string, params: Map<string, string> = ne
     }
 
     console.log(`Processing ${filePath}, params (${FragmentsProcessor.mapToString(params)})`);
-    const resolvedTemplate = FragmentsProcessor.resolveTokensRecursive(dirname(filePath), readFileSync(filePath, "utf8"), params);
+    const resolvedTemplate = FragmentsProcessor.resolveTokensRecursive(dirname(filePath), readFileSync(filePath, "utf8"), params, [], 0, relativeDirs);
 
     if (debug) {
         const spaceCount = (lines: Array<string>) => lines.length.toString().length + 1;
