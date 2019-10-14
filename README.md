@@ -125,7 +125,7 @@ Use # for line comments, anything between the # and end of line will be skipped 
 
 ```json
   "devDependencies": {
-    "serverless-fragments": "^2.0.0"
+    "serverless-fragments": "^2.5.2"
    }
 ```
 
