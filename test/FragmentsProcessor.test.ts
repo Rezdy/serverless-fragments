@@ -1,7 +1,6 @@
-import { FragmentsProcessor, TokenType } from "../src";
+import { FragmentsProcessor, TokenType, load, dump } from "../src";
 import { dirname, join } from 'path';
 import { readFileSync } from "fs";
-
 
 function serverlessDir() {
     return join(__dirname, 'serverless');
@@ -260,8 +259,6 @@ describe("FragmentsProcessor tfile resolveTokensRecursive", () => {
             `region: \${opt:region}
 runtime: \${opt:runtime}`;
         expect(resolved.value).toBe(expectedContent);
-
-        console.log(resolved.value);
     });
 
     it("skip commented lines", async () => {
@@ -271,8 +268,6 @@ runtime: \${opt:runtime}`;
         const resolved = FragmentsProcessor.resolveTokensRecursive(serverlessDir(), content);
 
         expect(resolved.value).toBe(content);
-
-        console.log(resolved.value);
     });
 
     it("parameters with variable as a value", async () => {
@@ -285,8 +280,6 @@ runtime: \${opt:runtime}`;
             `region: \${opt:serverless-defined-region-variable}
 runtime: \${opt:runtime}`;
         expect(resolved.value).toBe(expectedContent);
-
-        console.log(resolved.value);
     });
 
 
@@ -304,8 +297,6 @@ runtime: \${opt:runtime}`;
 runtime: \${opt:runtime}`;
 
         expect(resolved.value).toBe(expectedContent);
-
-        console.log(resolved.value);
     });
 
     it("support colon after the tfile placeholder", async () => {
@@ -319,8 +310,6 @@ runtime: \${opt:runtime}`;
     region: \${opt:region}
     runtime: \${opt:runtime}`;
         expect(resolved.value).toBe(expectedContent);
-
-        console.log(resolved.value);
     });
 
     it("tfile with relative directories", async () => {
@@ -332,8 +321,6 @@ runtime: \${opt:runtime}`;
         const expectedContent = `region: \${opt:region}
 runtime: \${opt:runtime}`;
         expect(resolved.value).toBe(expectedContent);
-
-        console.log(resolved.value);
     });
 
 
@@ -397,6 +384,22 @@ custom:
         expect(resolved.value).toBe(expectedContent);
     });
 
+    it("load file with relative directories", async () => {
+
+        const serverlessYaml = join(__dirname, 'serverless/serverless.core.relativePaths.yml');
+
+        const resolved = load(serverlessYaml, new Map(), ['resources']);
+
+    const expectedContent = `service: '\${opt:name}'
+provider:
+  vpc:
+    securityGroupIds:
+      - '\${self:securityGroupId}'
+    subnetIds:
+      - '\${self:subnetId}'
+`;
+        expect(dump(resolved)).toBe(expectedContent);
+    });
 });
 
 describe("FragmentsProcessor string tokenizing", () => {

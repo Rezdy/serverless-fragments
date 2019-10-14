@@ -1,0 +1,4 @@
+service: ${opt:name}
+
+provider:
+  ${tfile:vpc.yml}:
