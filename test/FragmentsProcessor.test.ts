@@ -308,6 +308,21 @@ runtime: \${opt:runtime}`;
         console.log(resolved.value);
     });
 
+    it("support colon after the tfile placeholder", async () => {
+
+        const content = `service: test
+    \${tfile:resources/provider.yml}:`;
+
+        const resolved = FragmentsProcessor.resolveTokensRecursive(serverlessDir(), content);
+
+        const expectedContent = `service: test
+    region: \${opt:region}
+    runtime: \${opt:runtime}`;
+        expect(resolved.value).toBe(expectedContent);
+
+        console.log(resolved.value);
+    });
+
 
 });
 
