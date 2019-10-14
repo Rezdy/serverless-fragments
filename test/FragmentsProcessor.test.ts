@@ -323,6 +323,19 @@ runtime: \${opt:runtime}`;
         console.log(resolved.value);
     });
 
+    it("tfile with relative directories", async () => {
+
+        const content = `\${tfile:provider.yml}:`;
+
+        const resolved = FragmentsProcessor.resolveTokensRecursive(serverlessDir(), content, new Map(), [], 0, ['resources']);
+
+        const expectedContent = `region: \${opt:region}
+runtime: \${opt:runtime}`;
+        expect(resolved.value).toBe(expectedContent);
+
+        console.log(resolved.value);
+    });
+
 
 });
 

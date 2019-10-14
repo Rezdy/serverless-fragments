@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from "fs";
+import {existsSync, readFileSync, writeFileSync} from "fs";
 import { basename, dirname, join } from "path";
 import { dump as yamlDump, load as yamlLoad } from "js-yaml";
 
@@ -51,7 +51,7 @@ export class FragmentsProcessor {
      * * supports multiple params on s single line e.g. ${opt:foo}-${opt:bar}
      * * supports nested variables ${opt:foo-${opt:bar}}
      */
-    static resolveTokensRecursive(dir: string, value: string, params: Map<string, string> = new Map(), tokensStack: Array<Token> = [], level: number = 0): ReplaceResult {
+    static resolveTokensRecursive(dir: string, value: string, params: Map<string, string> = new Map(), tokensStack: Array<Token> = [], level: number = 0, relativeDirs: string[] = []): ReplaceResult {
 
         // console.log( `${level}:${FragmentsProcessor.printStack(tokensStack)}`);
 
@@ -67,7 +67,7 @@ export class FragmentsProcessor {
                 case TokenType.T_FILE_END:
                     if (this.lastTokenType(tokensStack) === TokenType.T_FILE_START) {
                         const lastTFileStartToken = tokensStack.pop();
-                        const res = this.replaceTFile(dir, value, lastTFileStartToken.index, currentToken.index, lastTFileStartToken.indentation, params, level);
+                        const res = this.replaceTFile(dir, value, lastTFileStartToken.index, currentToken.index, lastTFileStartToken.indentation, params, level, relativeDirs);
                         value = res.value;
                         currentToken.index = res.nextIndex;
                     }
@@ -76,7 +76,7 @@ export class FragmentsProcessor {
                 case TokenType.VAR_SELF_START:
                     if (this.VAR_START_TOKENS.includes(this.lastTokenType(tokensStack))) {
                         tokensStack.push(currentToken);
-                        const res =  this.resolveTokensRecursive(dir, value, params, tokensStack, ++level);
+                        const res =  this.resolveTokensRecursive(dir, value, params, tokensStack, ++level, relativeDirs);
                         value = res.value;
                         currentToken.index = res.nextIndex;
                         --level;
@@ -111,10 +111,19 @@ export class FragmentsProcessor {
      * file name can not contain characters '}', ':'
      * parameter names can not contain characters ',' or '='
      */
-    static replaceTFile(dir: string, value: string, startIndex: number, endIndex: number, indentation: string, params: Map<string, string>, level: number = 0): ReplaceResult {
+    static replaceTFile(dir: string, value: string, startIndex: number, endIndex: number, indentation: string, params: Map<string, string>, level: number = 0, relativeDirs: string[]): ReplaceResult {
         const tFile = this.extractTFile(value, startIndex, endIndex);
 
-        const absoluteFilePath = join(dir, tFile.filePath);
+        let absoluteFilePath = join(dir, tFile.filePath);
+
+        if(!existsSync(absoluteFilePath)){
+            absoluteFilePath = relativeDirs.map(path => join(dir, path, tFile.filePath)).filter( path => existsSync(path)).shift();
+        }
+
+        if(!existsSync(absoluteFilePath)){
+            throw new Error(`File ${tFile.filePath} specified in tfile placeholder does not exist`);
+        }
+
         const mergedParams = new Map([...params, ...tFile.params]);
         console.log(`Loading ${basename(dirname(absoluteFilePath))}/${basename(absoluteFilePath)}(${this.mapToString(mergedParams)}), indented ${indentation.length}x' ', `);
 
@@ -129,7 +138,7 @@ export class FragmentsProcessor {
             .map((value, index) => index != 0 ? indentation + value : value)
             .join("\n");
 
-        const res = this.resolveTokensRecursive(dir, fileContent, mergedParams, [], 0);
+        const res = this.resolveTokensRecursive(dir, fileContent, mergedParams, [], 0, relativeDirs);
         value = value.replace(tFile.placeholder, res.value);
 
         return { value, nextIndex: startIndex + res.value.length};
@@ -259,10 +268,11 @@ export class FragmentsProcessor {
  *
  * @param filePath file absolute path
  * @param params sls variable name -> value map. E.g. Map { '(foo' => 'bar', 'stage' => 'test)' }
+ * @param relativeDirs a list of relative directories paths where to look for tfile fragments. E.g. '../node_modules/serverless-constructs/'
  * @param debug print the resolved template before converting to Yaml object
  * @return yaml object
  */
-export const load = function (filePath: string, params: Map<string, string> = new Map(), debug: boolean = false): string {
+export const load = function (filePath: string, params: Map<string, string> = new Map(), relativeDirs: string[] = [], debug: boolean = false): string {
 
     let paramName;
     for (const arg of process.argv) {

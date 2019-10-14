@@ -49,6 +49,18 @@ as many languages support JSON natively, unlike yaml.
    ${tfile:config/${opt:stage}.json}
 ```
 
+tfile supports file resolution using a list of relative paths, which can be provided to the engine. This can be useful when referencing fragments from another npm modules. E.g.
+
+```js
+module.exports = slsFragments.load(path.join(__dirname, 'serverless/serverless.core.yml', new Map()), ['../node_modules/serverless-constructs/']);
+```
+ The engine will try to resolve tfile file reference as follows:
+ ```
+ [project dir]/[tfile file path]
+ [project dir]/[relative dir 1]/[tfile file path]
+ [project dir]/[relative dir 2]/[tfile file path]
+ ```
+
 **Syntax:** ``tfile:[file path]:[parameters]``, where
 
 * file_ a relative path to nested template file (relative to the directory of the loaded top level file)
@@ -198,3 +210,4 @@ from processing
   * process default variable values
   * support multiline tfile declaration
 * _2.1.0_ pass parameters to fragments recursively
+* _2.2.0_ support a list of relative paths for tfile lookup
