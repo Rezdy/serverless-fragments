@@ -117,7 +117,12 @@ export class FragmentsProcessor {
         let absoluteFilePath = join(dir, tFile.filePath);
 
         if(!existsSync(absoluteFilePath)){
-            absoluteFilePath = relativeDirs.map(path => join(dir, path, tFile.filePath)).filter( path => existsSync(path)).shift();
+            absoluteFilePath = relativeDirs
+                .map(path => {
+                    const joinedPath = join(dir, path, tFile.filePath);
+                    console.log(`Relative paths lookup ${joinedPath}`);
+                    return joinedPath;
+                }).filter( path => existsSync(path))[0];
         }
 
         if(!existsSync(absoluteFilePath)){
