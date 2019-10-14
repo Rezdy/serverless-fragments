@@ -137,7 +137,7 @@ Use # for line comments, anything between the # and end of line will be skipped 
 
 ```json
   "devDependencies": {
-    "serverless-fragments": "^2.5.2"
+    "serverless-fragments": "^2.6.0"
    }
 ```
 
@@ -210,4 +210,4 @@ from processing
   * process default variable values
   * support multiline tfile declaration
 * _2.1.0_ pass parameters to fragments recursively
-* _2.2.0_ support a list of relative paths for tfile lookup
+* _2.6.0_ support a list of relative paths for tfile lookup
